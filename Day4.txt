@@ -1,0 +1,157 @@
+AWS Bigdata Engineering ---- Day 4
+Trainer: Prashant Nair
+=============================================================================================
+
+Agenda:
+-------
+AWS Kinesis Data Stream + DynamoDB
+S3 Theory and Hands-on
+
+
+
+Task1: Prepare EC2 instance with LogGenerator.py and Kinesis Agent Installed !!!
+
+
+AWS Kinesis Delivery Stream:
+	Input : Direct PUT and Kinesis Data Stream
+	Output: S3,
+
+
+Yesterdays Task:
+
+Stream ---> Kinesis Data -------------------> Kinesis ------------> S3
+Source 		Stream			Delivery Stream
+	  (Agent was collecting
+	   data from folder and
+	   convert it to JSON)
+	  (collecting data
+	    through agent)
+
+
+Scenario: Deliver the data from Data Stream to DynamoDB(Any other AWS service used for Bigdata Engineering activity)
+
+Method1: Using a Developer Program (Developing a consumer application that will consume data from AWS Kinesis Data Stream and forward/preprocess and forward the data to any AWS service engine.)
+
+
+
+
+Stream ---> Kinesis Data -------------------> EC2-2------------> DynamoDB
+Source 		Stream			   (Run Consumer.py)
+(EC2-1)	  (Agent was collecting
+	   data from folder and
+	   convert it to JSON)
+	  (collecting data
+	    through agent)
+
+
+
+Lab Steps:  (25 mins)
+
+1. Deploy EC2-1 machine which will have LogGenerator.py, ec2admin role and Agent installed and configured.
+
+2. Deploy Kinesis Data Stream app named CadabraOrders with one shard.
+
+3. Configure agent.json in EC2-1 machine to get data from /var/log/cadabra, pre-process it to JSON and forward the same to CadabraOrders Data Stream.
+
+4. Restart the agent.
+
+5. Deploy EC2-2 machine, with ec2admin role.
+
+
+
+We are going to use a Python Application that can interact with the AWS services and can initiate data transfer from Kinesis Data Stream to Amazon DynamoDB
+
+
+Package: BOTO3
+
+wget https://raw.githubusercontent.com/prashantnair2050/AWSBigdataMat/main/Consumer.py
+
+
+6. Create a DynamoDB Table named CadabraOrders with
+	PrimaryKey: CustomerID (Datatype: Number)
+	SortKey: OrderID (Datatype: String)
+
+7. Provision another EC2 instance (EC2-2) with an intention to Run Consumer.py
+	- Boto3 
+
+		pip3 install boto3
+
+	- Give permission to Boto3 to access my AWS resources
+		- Go To IAM > Users > Create User > Select Access key - Programmatic access
+		- Create a group with AdministratorAccess Permission
+		- Click on Next > Finish > Download teh Credential File (csv)
+
+
+		AKIAZ3RCE7YWBSYCLR6Z
+		LraXqmPfPiVpHrJLwB1CS1WNeVQdIUe5o1sC6WDI
+
+	- Setup Boto3 with Access Key and Secret Key
+	
+		- Ensure you are in home dir (/home/ec2-user)	
+			pwd
+
+		- Create a hidden dir named aws
+
+			mkdir .aws
+
+			ls -a
+
+		- Get inside .aws and create a file named credentials
+			
+			cd .aws
+			vi credentials
+
+[default]
+aws_access_key_id=AKIAZ3RCE7YWEYRN3H6A
+aws_secret_access_key=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
+
+			Save the credentials file
+
+		- Create config file. This file is used to inform the AWS region to connect.
+
+			vi config
+
+[default]
+region=us-east-1
+
+8. Download Consumer.py in EC2-2
+
+wget https://raw.githubusercontent.com/prashantnair2050/AWSBigdataMat/main/Consumer.py
+
+chmod a+x Consumer.py
+
+9. Execute Consumer.py  in EC2-2
+
+Session1:  in EC2-2
+
+python3 Consumer.py
+
+Session2:  in EC2-1
+
+tail -f /var/log/aws-kinesis-agent/aws-kinesis-agent.log
+
+Session3: in EC2-1
+
+sudo ./LogGenerator.py 10000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

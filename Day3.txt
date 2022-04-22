@@ -1,0 +1,170 @@
+AWS Bigdata Engineering --- Day 3
+Trainer: Prashant Nair
+===============================================================================================
+
+Agenda
+-------
+Understanding Kinesis Firehose Configurations
+Working with Kinesis Data Streams
+Integrating Kinesis Data Stream + Kinesis Firehose + S3
+
+
+
+
+
+
+				AWS Kinesis
+				    |
+		----------------------------------------------
+		|					     |
+	Data Acquisition				Data Transformation
+		|					     |	
+	------------------------------
+	|			     |			Kinesis Data Analytics
+AWS Kinesis		AWS Kinesis DataStream
+Firehose
+
+
+
+Kinesis Firehose:
+	Its a Delivery Stream
+	It can only do Collect and Store
+	It cannot perform preprocessing activity 
+
+
+AWS Kinesis Data Stream: (Similar to Apache Kafka)
+	Its a realtime stream data pre-processing and storage engine
+	It has its own storage but the data shelf life is limited to 24hrs to 7 days
+	
+
+
+Lab1: Create a Data Stream that can preprocess the data and store the same in-app.
+==================================================================================
+
+Preprocessing Activity: Convert CSV data to JSON data
+
+
+
+EC2  ---------------------> Kinesis Agent  ----------------------------> AWS Kinesis Data Stream
+Instance			- Collect the data from 
+(LogGenerator.py)		   source folder
+				- Optionally, it will perform
+				  preprocessing
+
+
+
+
+1. Create an EC2 instance, provide admin role and generate compatible keys for Putty and WinSCP
+
+2. Install LogGenerator.py 
+
+3. Install Kinesis Agent
+
+4. Create a Kinesis Data Stream named CadabraOrdersInJSON
+
+
+	1. Go to Kinesis Dashboard > Click on Kinesis Data Stream > Create Data Stream
+	2. Set the Stream name  and Click on Create Data Stream
+
+	3. Append the below configuration in the agent file
+
+sudo vi /etc/aws-kinesis/agent.json
+
+
+{
+      "filePattern": "/var/log/cadabra/*.log",
+      "kinesisStream": "CadabraOrdersInJSON",
+      "partitionKeyOption": "RANDOM",
+      "dataProcessingOptions": [
+         {
+            "optionName": "CSVTOJSON",
+            "customFieldNames": ["InvoiceNo", "StockCode", "Description", "Quantity", "InvoiceDate", "UnitPrice", "Customer", "Country"]
+         }
+      ]
+    }
+
+	4. Restarted the agent
+
+	sudo service aws-kinesis-agent restart
+
+
+
+
+
+
+
+
+
+AWS Kinesis Data Stream is a Publish Subscribe Mechanism Tool To deal with realtime streaming data !!!
+Create AWS Kinesis Firehose App to subscribe data from Stream and Store the same in S3.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=========================================================================================
+
+
+Cleanup the resources in AWS.
+
+	- Create a fresh the Delivery Stream and Data Stream
+        - Create a new bucket
+
+=========================================================================================
+
+Assignment 1: txnsSmall loading using Kinesis Firehose and Data Stream
+
+1. Create an Ec2 instance with admin rights to AWS account and load the txns file in ec2 instance (Hint: Use WinSCP)
+2. Create a Data Stream that will accept the data in the form of JSON
+3. Create Delivery Stream that can accept the data from Data Stream and sink the same in the S3 bucket.
+
+
+
+Create a document for this assignment with Snapshots
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

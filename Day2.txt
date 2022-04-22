@@ -1,0 +1,173 @@
+AWS Data Engineering ---- Day2
+Trainer: Prashant Nair
+===============================================================================================================================
+
+Agenda
+-------
+Data Acquisition in AWS
+Lab: AWS Kinesis Firehose
+Lab: AWS Kinesis Data Streams
+
+
+Data Acq
+
+
+File --------------------> Direct Upload From Web ---------------> S3
+
+Database ----------------> ? ------------------------------------> S3
+
+Streams -----------------> AWS Kinesis --------------------------> S3 
+
+
+
+Lab1: Grab Realtime Streams from the source machine using AWS kinesis and store the same in S3
+===============================================================================================
+
+
+EC2 
+Instance  ---------------------> AWS kinesis Firehose ----------------------> S3 bucket
+(Run a program
+that will generate
+stream data)
+
+
+Part1: Setup Data Stream Server that will emit realtime logs
+---------------------------------------------------------------
+
+1. Create an EC2 instance (t2.micro), provide admin role, and login the same via putty and WinSCP
+
+2. Install AWS kinesis firehose agent in the data source machine
+	
+sudo yum install -y aws-kinesis-agent
+
+3. Install a dummy program that can generate dummy logs.
+
+Download the same from GDrive and transfer using WinScP
+
+chmod a+x LogGenerator.py
+
+ls
+
+This programs generates realtime stream of logs and store the same in the folder /var/log/cadabra
+
+
+4. Create necessary folders
+
+sudo mkdir /var/log/cadabra
+
+
+Part2: Setup Kinesis Delivery Stream named CadabraOrders in Kinesis Firehose. This stream wwill get the data from Agent and store the same in S3
+-----------------------------------------------------------------------------------------------
+
+
+5. Create Kinesis Data Firehose Delivery Stream
+
+	a. On the search bar type "kinesis" and click on Kinesis
+	b. Click on/Select Kinesis Data Firehose > Create Delivery Stream
+	c. Select Source as Direct PUT and Destination as Amazon S3
+	d. Set the delivery stream name as "CadabraOrders"
+	e. Go to Destination Settings > Click on Create (to create a bucket). Once bucket is created go back to Kinesis tab and click on Browse > Select relevant bucket and click on Choose.
+	f. Once done scroll down and click on "Create delivery Stream"
+
+
+
+
+
+
+
+Part3: Configure Agent in EC2 to deliver streams from /var/log/cadabra to CadabraOrders delivery stream
+-----------------------------------------------------------------------------------------------
+	
+6. Configure the Kinesis Firehose Agent to get the realtime streams from /var/log/cadabra and store the same in my AWS Kinesis delivery stream object. Go to Putty and perform the following
+
+	a. cd /etc/aws-kinesis/
+	b. sudo vi agent.json
+
+{
+  "cloudwatch.emitMetrics": true,
+  "kinesis.endpoint": "",
+  "firehose.endpoint": "firehose.ap-south-1.amazonaws.com",
+
+  "flows": [
+    {
+      "filePattern": "/var/log/cadabra/*.log",
+      "deliveryStream": "CadabraLogs"
+    }
+  ]
+}
+
+7. Start the agent
+
+sudo service aws-kinesis-agent stop
+
+sudo service aws-kinesis-agent start
+
+cd\
+
+8. Emit some logs
+
+sudo ./LogGenerator.py 100000
+
+To check the status of the agent, create a duplicate session in Putty(Open a new session in pUtty for EC2 instance) and type the following command
+
+tail -f /var/log/aws-kinesis-agent/aws-kinesis-agent.log
+
+
+
+Check teh S3 bucket to verify whether data is stored successfully or not !!!
+
+
+
+
+
+
+
+
+9. Incase if you face any problems you need to check the logs
+
+For Kinesis firehose agent the log location is /var/log/aws-kinesis-agent/
+
+Problem detected ! Permissions and CREDENTIALS issue!
+Solution: Add permission using IAM (Identity Access Management)
+
+	a. Go to search box , type 'iam' and click the same
+	b. Click on Roles > Create Role
+	c. Click on EC2 > Permissions > Select " Administrator Access" > Click on Tags > Review > Give some role name "ec2-admin" > Click on Create Role.
+	d. Go to EC2 page > Select the relevant machine > Actions > Security > Modify IAM Role
+
+
+
+
+=========================================================================================
+
+
+Cleanup the resources in AWS.
+	- Terminate EC2 Instance
+	- Delete the Delivery Stream
+        - Delete the ec2admin role
+        - Delete the bucket
+
+=========================================================================================
+
+Assignment 1: txnsSmall loading using Kinesis Firehose
+
+1. Create an Ec2 instance with admin rights to AWS account and load the txns file in ec2 instance (Hint: Use WinSCP)
+2. Create Delivery Stream named walmart such that source is EC2 Instance and destination is S3. Create relevant s3 bucket
+3. Configure agent to get the data from /var/log/transactions and provide the same to the delivery stream named walmart. Restart the agent
+4. Copy the file txns from home folder to /var/log/transactions using copy command in linux. Check if the file data is received @ s3 location.
+
+
+
+{
+  "cloudwatch.emitMetrics": true,
+  "kinesis.endpoint": "",
+  "firehose.endpoint": "",
+  "flows": [
+    {
+      "filePattern": "/var/log/transactions/*",
+      "deliveryStream": "txnsStream"
+    }
+  ]
+}
+
+
